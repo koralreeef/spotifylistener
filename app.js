@@ -131,8 +131,21 @@ const displayInfo = async (response) => {
     //let artist = response.data.item.artists[0].name;
     let track = response.data.item.name;
     let url;
-    if(response.data.item.is_local) url = localImage; 
-    else url = response.data.item.album.images[0].url;
+    //take playlist image instead of having an generic local image
+    if(response.data.item.is_local){
+      console.log('https://api.spotify.com/v1/playlists/'+(response.data.context.external_urls.spotify).substring(34));
+      await axios({
+        method: 'get',
+          url: 'https://api.spotify.com/v1/playlists/'+(response.data.context.external_urls.spotify).substring(34),
+          headers: {
+              Authorization: `Bearer `+token,
+            },
+      }).then(async function (response)
+    {
+        url = response.data.images[0].url;
+    });
+  }
+    else {url = response.data.item.album.images[0].url;}
     newalbumID = response.data.item.album.id;
     console.log(response.data.context.external_urls.spotify);
     //console.log(album);
