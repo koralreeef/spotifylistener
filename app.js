@@ -12,6 +12,7 @@ let timeoutID = 0;
 let status2 = "song timed out";
 let status1 = "skipped song or changed playlists";
 const albumHistory = [];
+const playlistHistory = [];
 
 const start = async () => {
   emptyFolder("./output");
@@ -140,13 +141,14 @@ const displayInfo = async (response) => {
           headers: {
               Authorization: `Bearer `+token,
             },
-      }).then(async function (response)
+      }).then(async function (res)
     {
-        url = response.data.images[0].url;
+        url = res.data.images[0].url;
     });
   }
     else {url = response.data.item.album.images[0].url;}
-    newalbumID = response.data.item.album.id;
+    let newalbumID = response.data.item.album.id;
+    let newplaylistID = (response.data.context.external_urls.spotify).substring(34);
     console.log(response.data.context.external_urls.spotify);
     //console.log(album);
     //console.log(artist);
@@ -167,24 +169,46 @@ const displayInfo = async (response) => {
 
     console.log("displaying song info...");
     //check if album cover is already downloaded
-    if(!albumHistory.includes(newalbumID)){
-    console.log("downloading new album cover...\n"+response.data.item.album.name)
-    albumHistory.push(newalbumID);
-    fs.writeFile('Output.txt', data, (err) => {
-      if (err) throw err;
-    })
-    await downloadFile(url, newalbumID);
-    imageDownload(newalbumID);
-    } else {
-    fs.writeFile('Output.txt', data, (err) => {
-      if (err) throw err;
-    })
-    imageDownload(newalbumID); //refresh past image to be resized
-    }
-    if(timeoutID > 0){
-      clearTimeout(timeoutID);
-      //console.log("timeout "+timeoutID+" destroyed");
-    }
+    if(!response.data.item.is_local){
+      if(!albumHistory.includes(newalbumID)){
+      console.log("downloading new album cover...\n"+response.data.item.album.name)
+      albumHistory.push(newalbumID);
+      fs.writeFile('Output.txt', data, (err) => {
+        if (err) throw err;
+      })
+      await downloadFile(url, newalbumID);
+      imageDownload(newalbumID);
+      } else {
+      fs.writeFile('Output.txt', data, (err) => {
+        if (err) throw err;
+      })
+      imageDownload(newalbumID); //refresh past image to be resized
+      }
+      if(timeoutID > 0){
+        clearTimeout(timeoutID);
+        //console.log("timeout "+timeoutID+" destroyed");
+      }
+    } 
+  else { 
+    if(!playlistHistory.includes(newplaylistID)){
+      console.log("downloading new playlist cover...\n"+'https://api.spotify.com/v1/playlists/'+newplaylistID)
+      playlistHistory.push(newplaylistID);
+      fs.writeFile('Output.txt', data, (err) => {
+        if (err) throw err;
+      })
+      await downloadFile(url, newplaylistID);
+      imageDownload(newplaylistID);
+      } else {
+      fs.writeFile('Output.txt', data, (err) => {
+        if (err) throw err;
+      })
+      imageDownload(newplaylistID); //refresh past image to be resized
+      }
+      if(timeoutID > 0){
+        clearTimeout(timeoutID);
+        //console.log("timeout "+timeoutID+" destroyed");
+      }
+  }
 };
 
 setInterval(async () => { 
